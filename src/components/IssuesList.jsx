@@ -1,75 +1,19 @@
+import { useEffect } from 'react';
 import { useQuery } from 'react-query';
-import { Link } from 'react-router-dom';
-import { GoIssueClosed, GoIssueOpened, GoComment } from 'react-icons/go';
-import { relativeDate } from '../helpers/relativeDate';
-import { useUserData } from '../helpers/useUserData';
+import IssueItem from './IssueItem';
 
-function IssueItem({
-	key,
-	title,
-	number,
-	assignee,
-	commentCount,
-	createBy,
-	createdDate,
-	labels,
-	status,
-}) {
-	const assigneeUser = useUserData(assignee);
-	const createdByUser = useUserData(createBy);
+export default function IssuesList({ selectedLabels }) {
+	const issuesQuery = useQuery(['issues', { selectedLabels }], () => {
+		const labelsString = selectedLabels
+			.map((label) => `labels[]=${label}`)
+			.join('&');
+		console.log('labelsString', labelsString);
+		return fetch('/api/issues').then((res) => res.json());
+	});
 
-	return (
-		<li>
-			<div>
-				{(status === 'done') | (status === 'cancelled') ? (
-					<GoIssueClosed color='red' />
-				) : (
-					<GoIssueOpened color='green' />
-				)}
-			</div>
-			<div className='issue-content'>
-				<span>
-					<Link to={`/issue/${number}`}>{title}</Link>
-					{labels.map((label) => {
-						return (
-							<span key={label} className={`label red`}>
-								{label}
-							</span>
-						);
-					})}
-				</span>
-				<small>
-					#{number} opened {relativeDate(createdDate)}{' '}
-					{createdByUser.isSuccess ? `by ${createdByUser.data.name}` : ''}
-				</small>
-			</div>
-			{assignee ? (
-				<img
-					src={
-						assigneeUser.isSuccess ? assigneeUser.data.profilePictureUrl : ``
-					}
-					className='assigned-to'
-					alt={'avatar'}
-				/>
-			) : null}
-			<span className='comment-count'>
-				{commentCount > 0 ? (
-					<>
-						<GoComment />
-						{commentCount}
-					</>
-				) : null}
-			</span>
-		</li>
-	);
-}
-
-export default function IssuesList() {
-	const issuesQuery = useQuery(['issues'], () =>
-		fetch('/api/issues').then((res) => res.json())
-	);
 	return (
 		<div>
+			{console.log('selectedLabels', selectedLabels)}
 			<h2>Issues List</h2>
 			{issuesQuery.isLoading ? (
 				<p>Loading...</p>
@@ -78,7 +22,7 @@ export default function IssuesList() {
 					{issuesQuery.data.map((issue) => {
 						return (
 							<IssueItem
-								key={issue.id}
+								id={issue.id}
 								title={issue.title}
 								number={issue.number}
 								assignee={issue.assignee}
@@ -87,6 +31,7 @@ export default function IssuesList() {
 								createdDate={issue.createdDate}
 								labels={issue.labels}
 								status={issue.status}
+								key={issue.id}
 							/>
 						);
 					})}
