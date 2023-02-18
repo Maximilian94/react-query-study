@@ -2,13 +2,16 @@ import { useEffect } from 'react';
 import { useQuery } from 'react-query';
 import IssueItem from './IssueItem';
 
-export default function IssuesList({ selectedLabels }) {
-	const issuesQuery = useQuery(['issues', { selectedLabels }], () => {
+export default function IssuesList({ selectedLabels, status }) {
+	const issuesQuery = useQuery(['issues', { selectedLabels, status }], () => {
+		const statusString = status ? `&status=${status}` : '';
 		const labelsString = selectedLabels
 			.map((label) => `labels[]=${label}`)
 			.join('&');
 		console.log('labelsString', labelsString);
-		return fetch('/api/issues').then((res) => res.json());
+		return fetch(`/api/issues?${labelsString}${statusString}`).then((res) =>
+			res.json()
+		);
 	});
 
 	return (
